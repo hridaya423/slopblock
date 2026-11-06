@@ -41,22 +41,23 @@ function readPage(body) {
 }
 
 async function fetchRemainingPages(onProgress) {
+  const seenCursors = new Set();
   let cursor = firstPage.cursor;
-  while (cursor) {
+  while (cursor && !seenCursors.has(cursor)) {
+    seenCursors.add(cursor);
     const url = new URL(firstPage.url, location.origin);
     const variables = JSON.parse(url.searchParams.get("variables"));
     url.searchParams.set("variables", JSON.stringify({ ...variables, cursor }));
     const response = await fetch(url, { headers: firstPage.headers, credentials: "include" });
-    if (!response.ok) return false;
+    if (!response.ok) return `X refused the member request (HTTP ${response.status})`;
     const page = readPage(await response.json());
-    const before = members.size;
+    if (page.users.length === 0) return null;
     for (const user of page.users) members.set(user.id, user.handle);
     onProgress(members.size);
-    if (members.size === before) return true;
     cursor = page.cursor;
     await sleep(500);
   }
-  return true;
+  return null;
 }
 
 async function scrollRemainingPages(onProgress) {
@@ -71,11 +72,16 @@ async function scrollRemainingPages(onProgress) {
 
 async function collectMembers(onProgress) {
   for (let waited = 0; !firstPage; waited += 500) {
-    if (waited > 30000) return;
+    if (waited > 30000) return null;
     await sleep(500);
   }
   onProgress(members.size);
-  if (!(await fetchRemainingPages(onProgress))) await scrollRemainingPages(onProgress);
+  const problem = await fetchRemainingPages(onProgress);
+  if (problem && document.visibilityState === "visible") {
+    await scrollRemainingPages(onProgress);
+    return null;
+  }
+  return problem;
 }
 
 async function block(userId, csrf) {
@@ -150,7 +156,7 @@ async function run() {
   const csrf = document.cookie.match(/(?:^|;\s*)ct0=([^;]+)/)?.[1];
   if (!csrf) return finish("Log in to X, then check again.", { error: "Not logged in to X" });
 
-  await collectMembers((count) => say(`Reading members. ${count} found.`));
+  const problem = await collectMembers((count) => say(`Reading members. ${count} found.`));
   if (members.size === 0) {
     return finish("Found no members. Check that the list exists and you can see it.", { error: "No members found" });
   }
@@ -176,5 +182,6 @@ async function run() {
     members: members.size,
     blocked,
     failed: failed.length,
+    ...(problem && { error: `Read only ${members.size} members. ${problem}` }),
   });
 }
