@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Slopblock</title>
+<link rel="stylesheet" href="popup.css">
+<body class="glaze">
+  <main class="popup">
+    <header class="head">
+      <div>
+        <h1 class="type-heading-sm">Slopblock</h1>
+        <p class="type-caption text-2" id="total">No accounts blocked yet</p>
+      </div>
+      <label class="switch-label type-label-sm" for="auto">
+        Auto-check
+        <button id="auto" class="switch" type="button" role="switch" aria-checked="true"><span class="switch-thumb"></span></button>
+      </label>
+    </header>
+
+    <section class="shell" aria-label="Lists">
+      <div class="panel">
+        <ul id="lists"></ul>
+        <p id="empty" class="empty" hidden>No lists yet. Paste a list URL below to start blocking its members.</p>
+      </div>
+      <form id="add" class="shell-foot">
+        <input id="url" class="field" placeholder="Paste an X list URL" aria-label="X list URL" autocomplete="off" spellcheck="false">
+        <button class="btn flat" type="submit">
+          <svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"/></svg>
+          Add list
+        </button>
+      </form>
+    </section>
+
+    <footer class="foot">
+      <p class="type-caption text-2" id="schedule">Checks every 6 hours</p>
+      <button id="run" class="btn glass" type="button">Check now</button>
+    </footer>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>
